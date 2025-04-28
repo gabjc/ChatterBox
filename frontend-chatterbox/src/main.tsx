@@ -8,7 +8,7 @@ import Login from "./pages/Login.tsx";
 import Register from "./pages/Register.tsx";
 import Home from "./pages/Home.tsx";
 import User from "./pages/User.tsx";
-import PublicChat from "./pages/PublicCHat.tsx";
+import PublicChat from "./pages/PublicChat.tsx";
 import PrivateChat from "./pages/PrivateChat.tsx";
 import Perms from "./pages/Perms.tsx";
 
