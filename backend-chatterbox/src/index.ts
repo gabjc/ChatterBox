@@ -1,47 +1,36 @@
+import "dotenv/config";
 import express from "express";
-import * as dotenv from 'dotenv'
-import { MongoClient, ServerApiVersion } from 'mongodb';
-dotenv.config()
+import connectToDatabase from "./config/db";
+import cors from "cors";
+import { APP_ORIGIN, PORT } from "./constants/env";
+import cookieParser from "cookie-parser";
+import errorHandler from "./middleware/errorHandler";
+import catchErrors from "./utils/catchErrors";
 
-const uri: string = process.env.DB_CONN_STRING || ""
 const app = express();
 
-const client: MongoClient = new MongoClient(uri {
-	serverApi: {
-		version: ServerApiVersion.v1,
-		strict: true,
-		deprecationErrors: true,
-	}
-})
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(
+	cors({
+		origin: APP_ORIGIN,
+		credentials: true,
+	})
+);
 
-app.get("/", (req, res) => {
+app.use(cookieParser());
+
+app.get("/", (req, res, next) => {
+	throw new Error("THIS IS AN TEST ERROR");
 	res.status(200).json({
 		status: "healthy",
 	});
 });
 
-app.listen(4004, () => {
-	console.log("Server is listening on 4004");
+app.use(errorHandler);
+
+app.listen(4004, async () => {
+	console.log(`Server is listening on port ${PORT}`);
+
+	await connectToDatabase();
 });
-
-
-// async function run() {
-// 	try {
-// 	  // Connect the client to the server	(optional starting in v4.7)
-// 	  await client.connect();
-// 	  // Send a ping to confirm a successful connection
-// 	  await client.db("admin").command({ ping: 1 });
-// 	  console.log("Pinged your deployment. You successfully connected to MongoDB!");
-// 	} finally {
-// 	  // Ensures that the client will close when you finish/error
-// 	  await client.close();
-// 	}
-//   }
-//   run().catch(console.dir);
-
-//**
-// 
-// The password for gabtez23 is included in the connection string
-//  for your first time setup. This password will not be
-//  available again after exiting this connect flow. 
-// */
