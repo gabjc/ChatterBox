@@ -1,6 +1,8 @@
-import { OK } from "../constants/http";
+import { CREATED, OK } from "../constants/http";
+import { createAccount } from "../services/auth.service";
 import catchErrors from "../utils/catchErrors";
 import { z } from "zod";
+import { setAuthCookies } from "../utils/cookies";
 
 const registerSchema = z
 	.object({
@@ -23,10 +25,8 @@ export const registerHandler = catchErrors(async (req, res) => {
 	});
 
 	// call service
+	const { user, accessToken, refreshToken } = await createAccount(request);
 
 	// return response
-	res.status(OK).json({
-		message: "User registration valid",
-		data: request,
-	});
+	return setAuthCookies({ res, accessToken, refreshToken });
 });

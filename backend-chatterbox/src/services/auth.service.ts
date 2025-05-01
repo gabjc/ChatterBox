@@ -1,4 +1,4 @@
-import { JWT_REFRESH_SECRET } from "../constants/env";
+import { JWT_REFRESH_SECRET, JWT_SECRET } from "../constants/env";
 import VerificationCodeType from "../constants/verificationCodeTypes";
 import SessionModel from "../models/session.model";
 import UserModel from "../models/user.model";
@@ -54,5 +54,22 @@ export const createAccount = async (data: CreateAccountParams) => {
 			expiresIn: "30d",
 		}
 	);
+
+	const accessToken = jwt.sign(
+		{
+			userId: user._id,
+			sessionId: session._id,
+		},
+		JWT_SECRET,
+		{
+			audience: ["USER", "ADMIN", "SUPER"],
+			expiresIn: "15m",
+		}
+	);
 	// return user & tokens
+	return {
+		user,
+		accessToken,
+		refreshToken,
+	};
 };
