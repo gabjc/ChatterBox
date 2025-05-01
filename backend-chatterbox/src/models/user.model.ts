@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { compareValue, hashValue } from "../utils/bcrypt";
+import Roles from "../constants/roles";
 
 export interface UserDocument extends mongoose.Document {
 	email: string;
@@ -7,6 +8,7 @@ export interface UserDocument extends mongoose.Document {
 	verified: boolean;
 	createdAt: Date;
 	updatedAt: Date;
+	Role: Roles;
 	comparePassword(val: string): Promise<boolean>;
 }
 
