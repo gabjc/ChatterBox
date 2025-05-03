@@ -22,6 +22,7 @@ const errorHandler: ErrorRequestHandler = (error, req, res, next) => {
 	}
 
 	res.status(INTERNAL_SERVER_ERROR).send("Internal Server Error");
+	return;
 };
 
 export default errorHandler;

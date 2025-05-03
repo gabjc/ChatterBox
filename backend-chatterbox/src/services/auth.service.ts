@@ -1,4 +1,5 @@
 import { JWT_REFRESH_SECRET, JWT_SECRET } from "../constants/env";
+import Roles from "../constants/roles";
 import VerificationCodeType from "../constants/verificationCodeTypes";
 import SessionModel from "../models/session.model";
 import UserModel from "../models/user.model";
@@ -25,7 +26,7 @@ export const createAccount = async (data: CreateAccountParams) => {
 	const user = await UserModel.create({
 		email: data.email,
 		password: data.password,
-		role: "Basic",
+		role: Roles.USER,
 	});
 
 	// Create verification code
@@ -50,7 +51,7 @@ export const createAccount = async (data: CreateAccountParams) => {
 		},
 		JWT_REFRESH_SECRET,
 		{
-			audience: ["USER", "ADMIN", "SUPER"],
+			audience: [user.role],
 			expiresIn: "30d",
 		}
 	);
@@ -62,7 +63,7 @@ export const createAccount = async (data: CreateAccountParams) => {
 		},
 		JWT_SECRET,
 		{
-			audience: ["USER", "ADMIN", "SUPER"],
+			audience: [user.role],
 			expiresIn: "15m",
 		}
 	);

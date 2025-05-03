@@ -18,7 +18,6 @@ const registerSchema = z
 
 export const registerHandler = catchErrors(async (req, res) => {
 	// validate request
-	console.log("BODY:", req.body); // Add this
 	const request = registerSchema.parse({
 		...req.body,
 		userAgent: req.headers["user-agent"],
@@ -28,5 +27,7 @@ export const registerHandler = catchErrors(async (req, res) => {
 	const { user, accessToken, refreshToken } = await createAccount(request);
 
 	// return response
-	return setAuthCookies({ res, accessToken, refreshToken });
+	return setAuthCookies({ res, accessToken, refreshToken })
+		.status(CREATED)
+		.json(user);
 });

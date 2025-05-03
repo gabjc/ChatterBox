@@ -1,6 +1,6 @@
 import { CookieOptions, Response } from "express";
 import { fifteenMinuetsFromNow, thirtyDaysFromNow } from "./date";
-
+import { OK } from "../constants/http";
 const secure = process.env.NODE_ENV !== "development";
 
 const defaults: CookieOptions = {
