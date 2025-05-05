@@ -1,9 +1,18 @@
 import { CREATED, OK, UNAUTHORIZED } from "../constants/http";
 import SessionModel from "../models/session.model";
-import { createAccount, loginUser, refreshUserAccessToken } from "../services/auth.service";
+import {
+	createAccount,
+	loginUser,
+	refreshUserAccessToken,
+} from "../services/auth.service";
 import appAssert from "../utils/appAssert";
 import catchErrors from "../utils/catchErrors";
-import { clearAuthcookies, getAccessTokenCookieOptions, getRefreshTokenCookieOptions, setAuthCookies } from "../utils/cookies";
+import {
+	clearAuthcookies,
+	getAccessTokenCookieOptions,
+	getRefreshTokenCookieOptions,
+	setAuthCookies,
+} from "../utils/cookies";
 import { verifyToken } from "../utils/jwt";
 import { loginSchema, registerSchema } from "./auth.schemas";
 
@@ -36,7 +45,7 @@ export const loginHandler = catchErrors(async (req, res) => {
 });
 
 export const logoutHandler = catchErrors(async (req, res) => {
-	const accessToken = req.cookies.accessToken as string|undefined;
+	const accessToken = req.cookies.accessToken as string | undefined;
 	const { payload } = verifyToken(accessToken || "");
 
 	if (payload) {
@@ -48,16 +57,19 @@ export const logoutHandler = catchErrors(async (req, res) => {
 	});
 });
 
-
 export const refreshHandler = catchErrors(async (req, res) => {
-	const refreshToken = req.cookies.refreshToken as string|undefined
-	appAssert(refreshToken, UNAUTHORIZED, "Missing refresh token")
+	const refreshToken = req.cookies.refreshToken as string | undefined;
+	appAssert(refreshToken, UNAUTHORIZED, "Missing refresh token");
 
-	 const { accessToken, newRefreshToken } = await refreshUserAccessToken(refreshToken)
-	 
+	const { accessToken, newRefreshToken } =
+		await refreshUserAccessToken(refreshToken);
+
 	if (newRefreshToken) {
-		res.cookie("refreshToken", newRefreshToken, getRefreshTokenCookieOptions())
-	} 
+		res.cookie("refreshToken", newRefreshToken, getRefreshTokenCookieOptions());
+	}
 
-	 return res.status(OK).cookie("accessToken", accessToken, getAccessTokenCookieOptions()).json({ message: "Access token refreshed" })
-	})
+	return res
+		.status(OK)
+		.cookie("accessToken", accessToken, getAccessTokenCookieOptions())
+		.json({ message: "Access token refreshed" });
+});

@@ -6,12 +6,12 @@ import Roles from "../constants/roles";
 
 export type RefreshTokenPayload = {
 	sessionId: SessionDocument["_id"];
-	role: UserDocument["role"];
+	role?: UserDocument["role"];
 };
 export type AccessTokenPayload = {
 	userId: UserDocument["_id"];
-	role: UserDocument["role"];
 	sessionId: SessionDocument["_id"];
+	role?: UserDocument["role"];
 };
 
 type SignOptionsAndSecret = SignOptions & { secret: string };
