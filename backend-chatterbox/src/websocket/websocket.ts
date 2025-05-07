@@ -89,11 +89,52 @@ export class WebSocketServer {
 					socket.emit("chat:error", "Failed to send message");
 				}
 			});
-		});
 
-		Socket.on("chat:leave", (chatId) => {
-			socket.leave(chatId);
-			console.log(`User ${socket.userId} left room ${chatId}`);
+			// Handle user typing indicator
+			socket.on("chat:typing", (data) => {
+				const { chatId, isTyping } = data;
+
+				socket
+					.to(chatId)
+					.emit("chat:typing", { userId: socket.userId, isTyping });
+			});
+
+			// Handle user leaving chat
+			socket.on("chat:leave", (chatId) => {
+				socket.to(chatId).emit("chat:userLeft", chatId);
+			});
+
+			// Handle user joining specific chat
+			socket.on("chat:join", async (chatId) => {
+				try {
+					const canAccess = await this.verifyUserChatAccess(
+						socket.userId!,
+						chatId
+					);
+					appAssert(
+						canAccess,
+						UNAUTHORIZED,
+						"You do not have access to this chat"
+					);
+					socket.join(chatId);
+
+					const messages = await MessageModel.find({ chatId })
+						.sort({ createdAt: -1 })
+						.limit(50)
+						.populate("userId", "email")
+						.populate("userId", "email")
+						.exec();
+
+					socket.emit("chat:messages", messages.reverse());
+				} catch (error) {
+					console.error("Error joining chat:", error);
+					socket.emit("chat:error", "Failed to join chat");
+				}
+			});
+
+			socket.on("disconnect", () => {
+				console.log(`User disconnected: ${socket.userId}`);
+			});
 		});
 	}
 
