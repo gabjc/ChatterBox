@@ -3,9 +3,11 @@ import http from "http";
 import { NODE_ENV } from "../constants/env";
 import mongoose from "mongoose";
 import appAssert from "../utils/appAssert";
-import { UNAUTHORIZED } from "../constants/http";
+import { NOT_FOUND, UNAUTHORIZED } from "../constants/http";
 import { verifyToken } from "../utils/jwt";
 import ChatModel from "../models/chat.model";
+import UserModel from "../models/user.model";
+import MessageModel from "../models/message.model";
 
 interface SocketWithAuth extends Socket {
 	userId?: mongoose.Types.ObjectId;
@@ -49,7 +51,49 @@ export class WebSocketServer {
 	private setUpConnectionHandlers() {
 		this.io.on("connection", async (socket: SocketWithAuth) => {
 			console.log(`User connected: ${socket.userId}`);
+			// Join user rooms
 			await this.joinUserRooms(socket);
+
+			// Handle chat messages
+			socket.on("chat:message", async (data) => {
+				try {
+					const { chatId, content } = data;
+
+					const canAccess = await this.verifyUserChatAccess(
+						socket.userId!,
+						chatId
+					);
+
+					if (!canAccess) {
+						socket.emit("chat:error", "You do not have access to this chat");
+						return;
+					}
+
+					// Send message to the database
+					const message = await MessageModel.create({
+						chatId,
+						userId: socket.userId,
+						content,
+						createdAt: new Date(),
+					});
+
+					// Populate the message with user information
+					const populatedMessage = await MessageModel.findById(
+						message._id
+					).populate("userId", "email");
+
+					// Emit the message to the chat room
+					this.io.to(chatId).emit("chat:message", populatedMessage);
+				} catch (error) {
+					console.error("Error handling chat message:", error);
+					socket.emit("chat:error", "Failed to send message");
+				}
+			});
+		});
+
+		Socket.on("chat:leave", (chatId) => {
+			socket.leave(chatId);
+			console.log(`User ${socket.userId} left room ${chatId}`);
 		});
 	}
 
@@ -71,6 +115,27 @@ export class WebSocketServer {
 			socket.emit("chat:list", chats);
 		} catch (error) {
 			console.error("Error joining user rooms:", error);
+		}
+	}
+
+	private async verifyUserChatAccess(
+		userId: mongoose.Types.ObjectId,
+		chatId: string
+	): Promise<boolean> {
+		try {
+			const chat = await ChatModel.findById(chatId);
+			appAssert(chat, NOT_FOUND, "Chat not found");
+
+			const user = await UserModel.findById(userId);
+			appAssert(user, NOT_FOUND, "User not found");
+
+			const isMember = chat.members.some((member) => member.equals(userId));
+			const hasRoleAccess = chat.allowedRoles.includes(user.role);
+
+			return isMember || hasRoleAccess;
+		} catch (error) {
+			console.error("Access verification error:", error);
+			return false;
 		}
 	}
 }
