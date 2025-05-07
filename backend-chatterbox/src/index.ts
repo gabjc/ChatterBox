@@ -1,47 +1,21 @@
 import "dotenv/config";
-import express from "express";
+import http from "http";
+import app from "./app";
 import connectToDatabase from "./config/db";
-import cors from "cors";
-import { APP_ORIGIN, PORT } from "./constants/env";
-import cookieParser from "cookie-parser";
-import errorHandler from "./middleware/errorHandler";
-import catchErrors from "./utils/catchErrors";
-import { OK } from "./constants/http";
-import authRoutes from "./routes/auth.route";
-import authenticate from "./middleware/authenticate";
-import userRoutes from "./routes/user.route";
-import sessionRoutes from "./routes/session.route";
+import { PORT } from "./constants/env";
+import WebSocketServer from "./websocket/websocket";
 
-const app = express();
+// Create HTTP server
+const server = http.createServer(app);
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(
-	cors({
-		origin: APP_ORIGIN,
-		credentials: true,
-	})
-);
+// Initialize WebSocket server
+const wsServer = new WebSocketServer(server);
 
-app.use(cookieParser());
-
-app.get("/", (req, res, next) => {
-	res.status(OK).json({
-		status: "healthy",
-	});
-});
-
-// auth routes
-app.use("/auth", authRoutes);
-
-//protected rotues
-app.use("/user", authenticate, userRoutes);
-app.use("/sessions", authenticate, sessionRoutes);
-
-app.use(errorHandler);
-
-app.listen(PORT, async () => {
+// Start the server
+server.listen(PORT, async () => {
 	console.log(`Server is listening on port ${PORT}`);
+	console.log(`WebSocket server initialized`);
 
+	// Connect to database
 	await connectToDatabase();
 });
