@@ -20,7 +20,7 @@ chatRoutes.put("/:id", updateChatHandler);
 chatRoutes.delete("/:id", deleteChatHandler);
 
 // Chat messages
-chatRoutes.get(":/id/messages", getChatMessagesHandler);
+chatRoutes.get("/:id/messages", getChatMessagesHandler);
 
 // Chat members
 chatRoutes.post("/:id/members", addChatMembersHandler);
