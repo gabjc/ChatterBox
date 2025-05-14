@@ -13,6 +13,7 @@ import userRoutes from "./routes/user.route";
 import sessionRoutes from "./routes/session.route";
 import { Server } from "socket.io";
 import { createServer } from "http";
+import chatRoutes from "./routes/chat.route";
 
 const app = express();
 
@@ -39,6 +40,7 @@ app.use("/auth", authRoutes);
 //protected rotues
 app.use("/user", authenticate, userRoutes);
 app.use("/sessions", authenticate, sessionRoutes);
+app.use("/chats", authenticate, chatRoutes);
 
 app.use(errorHandler);
 

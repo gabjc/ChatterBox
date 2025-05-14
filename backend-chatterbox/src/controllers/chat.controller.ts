@@ -81,7 +81,7 @@ export const deleteChatHandler = catchErrors(async (req, res) => {
 	return res.status(OK).json({ message: "Chat deleted successfully" });
 });
 
-const getChatMessagesHandler = catchErrors(async (req, res) => {
+export const getChatMessagesHandler = catchErrors(async (req, res) => {
 	const chatId = req.params.id;
 	const limit = Number(req.query.limit) || 50;
 	const before = req.query.before as string;

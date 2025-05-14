@@ -31,3 +31,21 @@ export const validadeChatAccess = async (
 		return false;
 	}
 };
+
+export const getUserAccessibleChats = async (
+	userId: mongoose.Types.ObjectId
+): Promise<mongoose.Document[]> => {
+	try {
+		const user = await UserModel.findById(userId);
+		if (!user) {
+			throw new Error("User not found");
+			return [];
+		}
+		return ChatModel.find({
+			$or: [{ members: userId }, { allowedRoles: user.role }],
+		}).sort({ updatedAt: -1 });
+	} catch (error) {
+		console.error("Error fetching user accessible chats:", error);
+		return [];
+	}
+};
