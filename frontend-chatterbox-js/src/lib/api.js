@@ -10,3 +10,6 @@ export const register = async (data) => {
 
 export const verifyEmail = async (verificationCode) =>
 	API.get(`/auth/email/verify/${verificationCode}`);
+
+export const sendPasswordResetEmail = async (email) =>
+	API.get(`/auth/password/forgot/`, { email });
