@@ -3,17 +3,27 @@ import viteLogo from "/vite.svg";
 import "./App.css";
 import { NavLink } from "react-router-dom";
 import { Routes, Route } from "react-router-dom";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+
+export const Home = () => {
+	return <div>Home</div>;
+};
 
 function App() {
+	// set the navigate function on our API client for use in the axios error interceptor
+	// this allows us to redirect to the login page when an auth error occurs
+	// const navigate = useNavigate();
+	// setNavigate(navigate);
 	return (
 		<Routes>
-			<Route path="/" element={<App />} />
+			<Route path="/" element={<Home />} />
 
 			<Route path="login" element={<Login />} />
 			<Route path="register" element={<Register />} />
+			<Route path="/email/verify/:code" element={<VerifyEmail />} />
 
-			<Route path="home" element={<Home />}>
-				<Route path="user/:userId" element={<User />} />
+			{/* <Route path="user/:userId" element={<User />} />
 			</Route>
 
 			<Route path="chat">
@@ -21,7 +31,7 @@ function App() {
 				<Route path="private" element={<PrivateChat />}>
 					<Route path="perms" element={<Perms />} />
 				</Route>
-			</Route>
+			</Route>  */}
 		</Routes>
 	);
 }
