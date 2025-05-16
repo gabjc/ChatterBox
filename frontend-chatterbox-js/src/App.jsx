@@ -5,6 +5,7 @@ import { NavLink } from "react-router-dom";
 import { Routes, Route } from "react-router-dom";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import VerifyEmail from "./pages/VerifyEmail";
 
 export const Home = () => {
 	return <div>Home</div>;

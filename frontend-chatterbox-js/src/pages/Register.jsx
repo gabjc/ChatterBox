@@ -92,7 +92,7 @@ const Register = () => {
 							onClick={() =>
 								createAccount({ email, password, confirmPassword })
 							}>
-							Create Accpimt
+							Create Account
 						</Button>
 						<Text align="center" fontSize="sm" color="text.muted">
 							Already have an account?{" "}
