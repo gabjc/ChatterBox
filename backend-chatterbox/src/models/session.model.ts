@@ -15,10 +15,17 @@ const sessionSchema = new mongoose.Schema<SessionDocument>({
 		index: true,
 	},
 	userAgent: { type: String },
-	createdAt: { type: Date, required: true, default: Date.now },
-	expiresAt: { type: Date, default: thirtyDaysFromNow },
+	createdAt: {
+		type: Date,
+		required: true,
+		default: Date.now,
+	},
+	expiresAt: {
+		type: Date,
+		required: true,
+		default: thirtyDaysFromNow,
+	},
 });
 
 const SessionModel = mongoose.model<SessionDocument>("Session", sessionSchema);
-
 export default SessionModel;

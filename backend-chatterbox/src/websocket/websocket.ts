@@ -37,7 +37,8 @@ export class WebSocketServer {
 				appAssert(payload, UNAUTHORIZED, "Invalid token");
 
 				socket.userId = payload.userId as mongoose.Types.ObjectId;
-				socket.role = payload.role;
+				// CHECK THIS @@
+				// socket.role = payload.role;
 
 				return next();
 			} catch (error) {

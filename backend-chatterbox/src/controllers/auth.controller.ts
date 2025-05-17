@@ -11,7 +11,7 @@ import {
 import appAssert from "../utils/appAssert";
 import catchErrors from "../utils/catchErrors";
 import {
-	clearAuthcookies,
+	clearAuthCookies,
 	getAccessTokenCookieOptions,
 	getRefreshTokenCookieOptions,
 	setAuthCookies,
@@ -61,7 +61,7 @@ export const logoutHandler = catchErrors(async (req, res) => {
 		await SessionModel.findByIdAndDelete(payload.sessionId);
 	}
 
-	return clearAuthcookies(res).status(OK).json({
+	return clearAuthCookies(res).status(OK).json({
 		message: "Logout successful",
 	});
 });
@@ -108,7 +108,7 @@ export const resetPasswordResetHandler = catchErrors(async (req, res) => {
 
 	await resetPassword(request);
 
-	return clearAuthcookies(res).status(OK).json({
+	return clearAuthCookies(res).status(OK).json({
 		message: "Password reset successful",
 	});
 });

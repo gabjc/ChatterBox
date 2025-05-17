@@ -21,6 +21,8 @@ function App() {
 	// setNavigate(navigate);
 	return (
 		<Routes>
+			{/* <Route path="/" element={<Home />} /> */}
+
 			<Route path="/" element={<AppContainer />}>
 				<Route index element={<Home />} />
 			</Route>

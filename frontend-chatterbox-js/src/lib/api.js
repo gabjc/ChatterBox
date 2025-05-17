@@ -15,4 +15,4 @@ export const sendPasswordResetEmail = async (email) =>
 export const resetPassword = async ({ verificationCode, password }) =>
 	API.post("/auth/password/reset", { verificationCode, password });
 
-export const getUser = async () => await API.get("/user");
+export const getUser = async () => API.get("/user");
