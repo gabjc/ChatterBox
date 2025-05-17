@@ -5,7 +5,7 @@ import { ChakraProvider } from "@chakra-ui/react";
 import { BrowserRouter } from "react-router-dom";
 import App from "./App.jsx";
 import queryClient from "./config/queryClient.js";
-import theme from "./theme/theme.js";
+import theme from "./theme/index.js";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
 	<ChakraProvider theme={theme}>

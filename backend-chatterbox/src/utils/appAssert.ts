@@ -9,10 +9,8 @@ type AppAssert = (
 	message: string,
 	appErrorCode?: AppErrorCode
 ) => asserts condition;
-
-/***
- *
- * asserts a condition adn throws an AppError if condition is falsy
+/**
+ * Asserts a condition and throws an AppError if the condition is falsy.
  */
 const appAssert: AppAssert = (
 	condition,

@@ -5,6 +5,7 @@ import useAuth from "../hooks/useAuth";
 
 const AppContainer = () => {
 	const { user, isLoading } = useAuth();
+
 	return isLoading ? (
 		<Center w="100vw" h="90vh" flexDir="column">
 			<Spinner mb={4} />
@@ -24,5 +25,4 @@ const AppContainer = () => {
 		/>
 	);
 };
-
 export default AppContainer;

@@ -21,11 +21,9 @@ const authenticate: RequestHandler = (req, res, next) => {
 		error === "jwt expired" ? "Token expired" : "Invalid token",
 		AppErrorCode.InvalidAccessToken
 	);
-
-	// ts cant sense index.d.ts so we will just ignore it, bad practice tho
-	//@ts-ignore
+	// @ts-ignore
 	req.userId = payload.userId;
-	//@ts-ignore
+	// @ts-ignore
 	req.sessionId = payload.sessionId;
 	next();
 };

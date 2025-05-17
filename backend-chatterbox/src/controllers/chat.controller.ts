@@ -1,4 +1,5 @@
 import { CREATED, FORBIDDEN, NOT_FOUND, OK } from "../constants/http";
+import Roles from "../constants/roles";
 import ChatModel from "../models/chat.model";
 import MessageModel from "../models/message.model";
 import { validadeChatAccess } from "../services/chat.service";
@@ -20,7 +21,7 @@ export const createChatHandler = catchErrors(async (req, res) => {
 
 export const getUserChatsHandler = catchErrors(async (req, res) => {
 	const user = req.userId;
-	const userRole = req.body.role;
+	const userRole = req.body.role as Roles;
 
 	const chats = await ChatModel.find({
 		$or: [{ members: user }, { allowedRoles: userRole }],

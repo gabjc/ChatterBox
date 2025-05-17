@@ -3,8 +3,7 @@ import { getUserHandler } from "../controllers/user.controller";
 
 const userRoutes = Router();
 
-//prefix: /auth
-
+// prefix: /user
 userRoutes.get("/", getUserHandler);
 
 export default userRoutes;

@@ -55,7 +55,7 @@ export const createAccount = async (data: CreateAccountParams) => {
 	});
 
 	const userId = user._id;
-	const userRole = user.role;
+	const userRole = user.role as Roles;
 
 	// Create verification code
 	const verificationCode = await VerificationCodeModel.create({
@@ -84,7 +84,6 @@ export const createAccount = async (data: CreateAccountParams) => {
 	const refreshToken = signToken(
 		{
 			sessionId: session._id,
-			role: userRole,
 		},
 		refreshTokenSignOptions
 	);
@@ -92,7 +91,6 @@ export const createAccount = async (data: CreateAccountParams) => {
 	const accessToken = signToken({
 		userId: userId,
 		sessionId: session._id,
-		role: userRole,
 	});
 	// return user & tokens
 	return {
@@ -123,7 +121,7 @@ export const loginUser = async ({
 
 	// create a session
 	const userId = user._id;
-	const userRole = user.role;
+	const userRole = user.role as Roles;
 	const session = await SessionModel.create({ userId, userAgent });
 
 	const sessionInfo = {
@@ -134,7 +132,6 @@ export const loginUser = async ({
 	const refreshToken = signToken(
 		{
 			sessionId: session._id,
-			role: userRole,
 		},
 		refreshTokenSignOptions
 	);
@@ -142,7 +139,6 @@ export const loginUser = async ({
 	const accessToken = signToken({
 		...sessionInfo,
 		userId: user._id,
-		role: userRole,
 	});
 
 	// return user & tokens

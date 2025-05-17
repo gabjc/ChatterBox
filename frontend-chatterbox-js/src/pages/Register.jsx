@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
 	Flex,
 	Box,
@@ -17,12 +17,10 @@ import {
 import { register } from "../lib/api";
 
 const Register = () => {
-	const location = useLocation();
 	const navigate = useNavigate();
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [confirmPassword, setConfirmPassword] = useState("");
-	const redirectUrl = location.state?.redirectUrl || "/";
 
 	const {
 		mutate: createAccount,
@@ -32,7 +30,7 @@ const Register = () => {
 	} = useMutation({
 		mutationFn: register,
 		onSuccess: () => {
-			navigate(redirectUrl, {
+			navigate("/", {
 				replace: true,
 			});
 		},
@@ -70,7 +68,7 @@ const Register = () => {
 								- Must be at least 6 characters long.
 							</Text>
 						</FormControl>
-						<FormControl id="confrimPassword">
+						<FormControl id="confirmPassword">
 							<FormLabel>Confirm Password</FormLabel>
 							<Input
 								type="password"
@@ -82,7 +80,6 @@ const Register = () => {
 								}
 							/>
 						</FormControl>
-
 						<Button
 							my={2}
 							isLoading={isPending}
@@ -106,5 +103,4 @@ const Register = () => {
 		</Flex>
 	);
 };
-
 export default Register;

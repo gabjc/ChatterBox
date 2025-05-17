@@ -20,6 +20,7 @@ import { sendPasswordResetEmail } from "../lib/api";
 
 const ForgotPassword = () => {
 	const [email, setEmail] = useState("");
+
 	const {
 		mutate: sendPasswordReset,
 		isPending,
@@ -33,13 +34,13 @@ const ForgotPassword = () => {
 	return (
 		<Flex minH="100vh" align="center" justify="center">
 			<Container mx="auto" maxW="md" py={12} px={6} textAlign="center">
-				<Heading fontSize="4xl" mb={6}>
+				<Heading fontSize="4xl" mb={8}>
 					Reset your password
 				</Heading>
 				<Box rounded="lg" bg="gray.700" boxShadow="lg" p={8}>
 					{isError && (
 						<Box mb={3} color="red.400">
-							{error?.message || "An error occurred"}
+							{error.message || "An error occurred"}
 						</Box>
 					)}
 					<Stack spacing={4}>
@@ -84,5 +85,4 @@ const ForgotPassword = () => {
 		</Flex>
 	);
 };
-
 export default ForgotPassword;
