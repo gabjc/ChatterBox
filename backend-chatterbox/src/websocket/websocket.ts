@@ -1,6 +1,6 @@
 import { Server as SocketIOServer, Socket } from "socket.io";
 import http from "http";
-import { NODE_ENV } from "../constants/env";
+import { APP_ORIGIN, NODE_ENV } from "../constants/env";
 import mongoose from "mongoose";
 import appAssert from "../utils/appAssert";
 import { NOT_FOUND, UNAUTHORIZED } from "../constants/http";
@@ -21,8 +21,9 @@ export class WebSocketServer {
 	constructor(server: http.Server) {
 		this.io = new SocketIOServer(server, {
 			cors: {
-				origin: NODE_ENV,
+				origin: APP_ORIGIN,
 				credentials: true,
+				methods: ["GET", "POST"],
 			},
 		});
 		this.initialize();

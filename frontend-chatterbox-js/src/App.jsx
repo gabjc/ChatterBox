@@ -10,6 +10,7 @@ import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import { setNavigate } from "./lib/navigation";
 import Home from "./pages/Home";
+import ChatContainer from "./components/Chat/ChatContainer";
 
 function App() {
 	// set the navigate function on our API client for use in the axios error interceptor
@@ -25,7 +26,7 @@ function App() {
 				<Route path="/profile" element={<Profile />} />
 				<Route path="settings" element={<Settings />} />
 
-				{/* <Route path="/chat/:chatType" element={<ChatContainer />} /> */}
+				<Route path="/chat/:chatType" element={<ChatContainer />} />
 			</Route>
 
 			<Route path="login" element={<Login />} />
