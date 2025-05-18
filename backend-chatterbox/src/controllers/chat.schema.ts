@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ChatType } from "../models/chat.model";
 
 export const createChatSchema = z.object({
 	name: z.string().min(1).max(100),
@@ -6,6 +7,9 @@ export const createChatSchema = z.object({
 	members: z.array(z.string()).optional(),
 	allowedRoles: z.array(z.string()).optional(),
 	isPrivate: z.boolean().optional(),
+	chatType: z
+		.enum([ChatType.PUBLIC, ChatType.PRIVATE])
+		.default(ChatType.PUBLIC),
 });
 
 export const updateChatSchema = z.object({
@@ -14,4 +18,9 @@ export const updateChatSchema = z.object({
 	members: z.array(z.string()).optional(),
 	allowedRoles: z.array(z.string()).optional(),
 	isPrivate: z.boolean().optional(),
+	chatType: z.enum([ChatType.PUBLIC, ChatType.PRIVATE]).optional(),
+});
+
+export const updateUserRoleSchema = z.object({
+	role: z.string().min(1),
 });
