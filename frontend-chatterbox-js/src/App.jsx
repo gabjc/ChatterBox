@@ -9,10 +9,7 @@ import AppContainer from "./components/AppContainer";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import { setNavigate } from "./lib/navigation";
-
-export const Home = () => {
-	return <div>Home</div>;
-};
+import Home from "./pages/Home";
 
 function App() {
 	// set the navigate function on our API client for use in the axios error interceptor
@@ -27,7 +24,10 @@ function App() {
 				<Route index element={<Home />} />
 				<Route path="/profile" element={<Profile />} />
 				<Route path="settings" element={<Settings />} />
+
+				{/* <Route path="/chat/:chatType" element={<ChatContainer />} /> */}
 			</Route>
+
 			<Route path="login" element={<Login />} />
 			<Route path="register" element={<Register />} />
 			<Route path="/email/verify/:code" element={<VerifyEmail />} />
