@@ -19,13 +19,10 @@ function App() {
 	setNavigate(navigate);
 	return (
 		<Routes>
-			{/* <Route path="/" element={<Home />} /> */}
-
 			<Route path="/" element={<AppContainer />}>
 				<Route index element={<Home />} />
 				<Route path="/profile" element={<Profile />} />
 				<Route path="settings" element={<Settings />} />
-
 				<Route path="/chat/:chatType" element={<ChatContainer />} />
 			</Route>
 
@@ -34,16 +31,6 @@ function App() {
 			<Route path="/email/verify/:code" element={<VerifyEmail />} />
 			<Route path="/password/forgot" element={<ForgotPassword />} />
 			<Route path="/password/rest" element={<ResetPassword />} />
-
-			{/* <Route path="user/:userId" element={<User />} />
-			</Route>
-
-			<Route path="chat">
-				<Route path="public" element={<PublicChat />} />
-				<Route path="private" element={<PrivateChat />}>
-					<Route path="perms" element={<Perms />} />
-				</Route>
-			</Route>  */}
 		</Routes>
 	);
 }

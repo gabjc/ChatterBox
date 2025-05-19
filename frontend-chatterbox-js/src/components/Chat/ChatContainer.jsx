@@ -3,10 +3,25 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Box, Flex, Heading, Text, useToast } from "@chakra-ui/react";
 import useAuth from "../../hooks/useAuth";
 import Roles from "../../constants/roles";
-import ChatSidebar from "./ChatSidebar";
 import MessageList from "./MessageList";
 import MessageInput from "./MessageInput";
+import ChatHeader from "./ChatHeader";
 import { io } from "socket.io-client";
+
+const STATIC_CHATS = {
+	public: {
+		_id: "public-chat",
+		name: "Public Chat",
+		description: "Chat room for all users",
+		chatType: "PUBLIC",
+	},
+	private: {
+		_id: "private-chat",
+		name: "Private Chat",
+		description: "Admin-only chat room",
+		chatType: "PRIVATE",
+	},
+};
 
 const ChatContainer = () => {
 	const { chatType } = useParams();
@@ -16,8 +31,10 @@ const ChatContainer = () => {
 	const [socket, setSocket] = useState(null);
 	const [messages, setMessages] = useState([]);
 	const [activeUsers, setActiveUsers] = useState([]);
-	const [currentChat, setCurrentChat] = useState(null);
-	const [chats, setChats] = useState([]);
+	const [isConnected, setIsConnected] = useState(false);
+
+	// Get the current chat based on the route param
+	const currentChat = STATIC_CHATS[chatType];
 
 	// Check permission
 	useEffect(() => {
@@ -38,7 +55,7 @@ const ChatContainer = () => {
 
 	// Initialize socket connection
 	useEffect(() => {
-		if (!user) return;
+		if (!user || !currentChat) return;
 
 		const socketIo = io(import.meta.env.VITE_API_URL, {
 			withCredentials: true,
@@ -49,24 +66,18 @@ const ChatContainer = () => {
 
 		socketIo.on("connect", () => {
 			console.log("Socket connected");
+			setIsConnected(true);
+
+			// Join the appropriate chat room
+			socketIo.emit("chat:join", currentChat._id);
+
+			// Request previous messages
+			socketIo.emit("chat:getMessages", currentChat._id);
 		});
 
-		socketIo.on("chat:list", (chatsList) => {
-			console.log("Received chats:", chatsList);
-			// Filter chats based on chat type
-			const filteredChats = chatsList.filter((chat) => {
-				if (chatType === "private") {
-					return chat.chatType === "PRIVATE";
-				} else {
-					return chat.chatType === "PUBLIC";
-				}
-			});
-			setChats(filteredChats);
-
-			// Select first chat if available
-			if (filteredChats.length > 0 && !currentChat) {
-				handleSelectChat(filteredChats[0]);
-			}
+		socketIo.on("chat:messages", (messageHistory) => {
+			console.log("Received message history:", messageHistory);
+			setMessages(messageHistory || []);
 		});
 
 		socketIo.on("chat:message", (message) => {
@@ -74,10 +85,15 @@ const ChatContainer = () => {
 			setMessages((prev) => [...prev, message]);
 		});
 
+		socketIo.on("chat:activeUsers", (users) => {
+			console.log("Active users:", users);
+			setActiveUsers(users);
+		});
+
 		socketIo.on("chat:userJoined", (userData) => {
 			toast({
 				title: "User joined",
-				description: `User ${userData.userId} joined the chat`,
+				description: `${userData.email || userData.userId} joined the chat`,
 				status: "info",
 				duration: 2000,
 				isClosable: true,
@@ -87,16 +103,11 @@ const ChatContainer = () => {
 		socketIo.on("chat:userLeft", (userData) => {
 			toast({
 				title: "User left",
-				description: `User ${userData.userId} left the chat`,
+				description: `${userData.email || userData.userId} left the chat`,
 				status: "info",
 				duration: 2000,
 				isClosable: true,
 			});
-		});
-
-		socketIo.on("chat:typing", ({ userId, isTyping }) => {
-			// Handle typing indicators
-			console.log(`User ${userId} is ${isTyping ? "typing" : "not typing"}`);
 		});
 
 		socketIo.on("chat:error", (error) => {
@@ -111,40 +122,32 @@ const ChatContainer = () => {
 
 		socketIo.on("disconnect", () => {
 			console.log("Socket disconnected");
+			setIsConnected(false);
 		});
 
 		setSocket(socketIo);
 
 		return () => {
 			if (socketIo) {
-				console.log("Disconnecting socket");
+				console.log("Leaving chat:", currentChat._id);
+				socketIo.emit("chat:leave", currentChat._id);
 				socketIo.disconnect();
+				setIsConnected(false);
 			}
 		};
-	}, [user, chatType, toast]);
-
-	const handleSelectChat = (chat) => {
-		// Leave current chat if any
-		if (currentChat && socket) {
-			socket.emit("chat:leave", currentChat._id);
-		}
-
-		setCurrentChat(chat);
-		setMessages([]);
-
-		// Join new chat
-		if (socket && chat) {
-			socket.emit("chat:join", chat._id);
-		}
-	};
+	}, [user, currentChat, toast]);
 
 	const handleSendMessage = (content) => {
-		if (!socket || !currentChat) return;
+		if (!socket || !currentChat || !isConnected) return;
 
 		socket.emit("chat:message", {
 			chatId: currentChat._id,
 			content,
 		});
+	};
+
+	const handleBack = () => {
+		navigate("/");
 	};
 
 	if (isLoading) {
@@ -167,43 +170,49 @@ const ChatContainer = () => {
 		);
 	}
 
+	if (!currentChat) {
+		return (
+			<Box textAlign="center" py={10}>
+				<Text>Invalid chat type. Please select a valid chat.</Text>
+			</Box>
+		);
+	}
+
 	return (
-		<Flex height="calc(100vh - 80px)" overflow="hidden">
-			<ChatSidebar
-				chats={chats}
-				currentChat={currentChat}
-				onSelectChat={handleSelectChat}
-				chatType={chatType}
+		<Flex direction="column" height="calc(100vh - 80px)" overflow="hidden">
+			<ChatHeader chatType={chatType} />
+
+			<Box
+				bg="gray.700"
+				p={4}
+				borderBottom="1px solid"
+				borderColor="gray.600"
+				display="flex"
+				justifyContent="space-between"
+				alignItems="center">
+				<Box>
+					<Text fontSize="sm" color="gray.400">
+						{currentChat.description}
+					</Text>
+				</Box>
+				<Text
+					fontSize="sm"
+					color={isConnected ? "green.300" : "red.300"}
+					fontWeight="medium">
+					{isConnected ? "Connected" : "Disconnected"}
+					{activeUsers.length > 0 &&
+						isConnected &&
+						` • ${activeUsers.length} online`}
+				</Text>
+			</Box>
+
+			<MessageList messages={messages} currentUser={user} />
+
+			<MessageInput
+				onSendMessage={handleSendMessage}
+				socket={socket}
+				currentChatId={currentChat._id}
 			/>
-
-			<Flex direction="column" flex="1" overflow="hidden">
-				{currentChat ? (
-					<>
-						<Box
-							bg="gray.700"
-							p={4}
-							borderBottom="1px solid"
-							borderColor="gray.600">
-							<Heading size="md">{currentChat.name}</Heading>
-							<Text fontSize="sm" color="gray.400">
-								{currentChat.description}
-							</Text>
-						</Box>
-
-						<MessageList messages={messages} currentUser={user} />
-
-						<MessageInput onSendMessage={handleSendMessage} />
-					</>
-				) : (
-					<Flex justify="center" align="center" flex="1">
-						<Text color="gray.500">
-							{chats.length > 0
-								? "Select a chat to start messaging"
-								: `No ${chatType} chats available`}
-						</Text>
-					</Flex>
-				)}
-			</Flex>
 		</Flex>
 	);
 };

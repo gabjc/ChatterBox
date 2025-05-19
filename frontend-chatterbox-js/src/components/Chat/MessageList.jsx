@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { Box, Flex, Text } from "@chakra-ui/react";
+import { Box, Flex, Text, Avatar, Badge } from "@chakra-ui/react";
 
 const MessageList = ({ messages, currentUser }) => {
 	const messagesEndRef = useRef(null);
@@ -11,6 +11,36 @@ const MessageList = ({ messages, currentUser }) => {
 	useEffect(() => {
 		scrollToBottom();
 	}, [messages]);
+
+	// Helper function to format timestamps
+	const formatTime = (timestamp) => {
+		const date = new Date(timestamp);
+		return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+	};
+
+	// Get a color for a user based on their ID to have consistent colors
+	const getUserColor = (userId) => {
+		if (!userId) return "gray.400";
+
+		// Simple hash function to generate a color from a string
+		const colors = [
+			"red.400",
+			"green.400",
+			"blue.400",
+			"yellow.400",
+			"purple.400",
+			"pink.400",
+			"teal.400",
+			"orange.400",
+		];
+
+		let hash = 0;
+		for (let i = 0; i < userId.length; i++) {
+			hash = (hash + userId.charCodeAt(i)) % colors.length;
+		}
+
+		return colors[hash];
+	};
 
 	return (
 		<Box
@@ -39,39 +69,82 @@ const MessageList = ({ messages, currentUser }) => {
 				<>
 					{messages.map((message, index) => {
 						const isCurrentUser = message.userId?._id === currentUser?._id;
+						const userColor = getUserColor(message.userId?._id);
+						const username = message.userId?.email || "Unknown User";
+						const displayName = username.split("@")[0]; // Extract name from email
+
+						// Add date separator when day changes
+						const shouldShowDate =
+							index === 0 ||
+							new Date(message.createdAt).toDateString() !==
+								new Date(messages[index - 1].createdAt).toDateString();
 
 						return (
-							<Flex
-								key={index}
-								justify={isCurrentUser ? "flex-end" : "flex-start"}
-								mb={3}>
-								<Box
-									maxWidth="70%"
-									bg={isCurrentUser ? "blue.500" : "gray.700"}
-									color="white"
-									p={3}
-									borderRadius="lg"
-									position="relative">
+							<Box key={index}>
+								{shouldShowDate && (
+									<Flex justify="center" mb={4} mt={index > 0 ? 6 : 0}>
+										<Badge px={2} py={1} borderRadius="md" colorScheme="gray">
+											{new Date(message.createdAt).toLocaleDateString()}
+										</Badge>
+									</Flex>
+								)}
+
+								<Flex
+									justify={isCurrentUser ? "flex-end" : "flex-start"}
+									mb={3}
+									mt={4}>
 									{!isCurrentUser && (
+										<Avatar
+											size="sm"
+											name={displayName}
+											bg={userColor}
+											color="white"
+											mr={2}
+										/>
+									)}
+
+									<Box
+										maxWidth="70%"
+										bg={isCurrentUser ? "blue.500" : "gray.700"}
+										color="white"
+										p={3}
+										borderRadius="lg"
+										position="relative">
+										{!isCurrentUser && (
+											<Text
+												fontSize="sm"
+												fontWeight="bold"
+												color={userColor}
+												mb={1}>
+												{displayName}
+												{message.userId?.role && (
+													<Text as="span" fontSize="xs" ml={1} color="gray.400">
+														({message.userId.role})
+													</Text>
+												)}
+											</Text>
+										)}
+										<Text>{message.content}</Text>
 										<Text
 											fontSize="xs"
-											fontWeight="bold"
-											color="blue.300"
-											mb={1}>
-											{message.userId?.email || "Unknown User"}
-											{message.userId?.role && (
-												<Text as="span" fontSize="xs" ml={1} color="gray.400">
-													({message.userId.role})
-												</Text>
-											)}
+											color="gray.400"
+											mt={1}
+											textAlign="right">
+											{formatTime(message.createdAt)}
 										</Text>
+									</Box>
+
+									{isCurrentUser && (
+										<Avatar
+											size="sm"
+											name={displayName}
+											bg="blue.500"
+											color="white"
+											ml={2}
+										/>
 									)}
-									<Text>{message.content}</Text>
-									<Text fontSize="xs" color="gray.400" mt={1} textAlign="right">
-										{new Date(message.createdAt).toLocaleTimeString()}
-									</Text>
-								</Box>
-							</Flex>
+								</Flex>
+							</Box>
 						);
 					})}
 					<div ref={messagesEndRef} />
