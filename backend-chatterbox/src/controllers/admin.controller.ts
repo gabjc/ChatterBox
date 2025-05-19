@@ -14,7 +14,6 @@ export const getAllUsersHandler = catchErrors(async (req, res) => {
 		"Admin or super user permissions required"
 	);
 
-	// Get all users but exclude password field
 	const users = await UserModel.find({}, { password: 0 }).sort({
 		createdAt: -1,
 	});
