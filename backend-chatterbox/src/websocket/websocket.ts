@@ -34,6 +34,14 @@ export class WebSocketServer {
 		this.initialize();
 	}
 
+	public getStatus() {
+		console.log("hello");
+		return {
+			connections: this.io.engine.clientsCount,
+			activeSockets: this.userSockets.size,
+		};
+	}
+
 	private initialize() {
 		this.io.use(async (socket: SocketWithAuth, next) => {
 			try {

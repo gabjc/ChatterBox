@@ -1,22 +1,23 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Box, Flex, Heading, Text, useToast } from "@chakra-ui/react";
+import { Box, Flex, Text, useToast } from "@chakra-ui/react";
+import { io } from "socket.io-client";
 import useAuth from "../../hooks/useAuth";
 import Roles from "../../constants/roles";
 import MessageList from "./MessageList";
 import MessageInput from "./MessageInput";
 import ChatHeader from "./ChatHeader";
-import { io } from "socket.io-client";
 
+// Match the static chat IDs from the backend
 const STATIC_CHATS = {
 	public: {
-		_id: "public-chat",
+		_id: "public-chat", // Must match backend STATIC_CHAT_IDS.PUBLIC
 		name: "Public Chat",
 		description: "Chat room for all users",
 		chatType: "PUBLIC",
 	},
 	private: {
-		_id: "private-chat",
+		_id: "private-chat", // Must match backend STATIC_CHAT_IDS.PRIVATE
 		name: "Private Chat",
 		description: "Admin-only chat room",
 		chatType: "PRIVATE",
@@ -32,11 +33,12 @@ const ChatContainer = () => {
 	const [messages, setMessages] = useState([]);
 	const [activeUsers, setActiveUsers] = useState([]);
 	const [isConnected, setIsConnected] = useState(false);
+	const [typingUsers, setTypingUsers] = useState([]);
 
 	// Get the current chat based on the route param
 	const currentChat = STATIC_CHATS[chatType];
 
-	// Check permission
+	// Check permission - redirect if unauthorized
 	useEffect(() => {
 		if (!isLoading && user) {
 			// If trying to access private chat as a regular user
@@ -50,46 +52,70 @@ const ChatContainer = () => {
 				});
 				navigate("/");
 			}
+
+			// If chat type is invalid, redirect to home
+			if (!currentChat) {
+				toast({
+					title: "Invalid chat",
+					description: "The requested chat room doesn't exist",
+					status: "error",
+					duration: 3000,
+					isClosable: true,
+				});
+				navigate("/");
+			}
 		}
-	}, [chatType, user, isLoading, navigate, toast]);
+	}, [chatType, user, isLoading, navigate, toast, currentChat]);
 
 	// Initialize socket connection
 	useEffect(() => {
 		if (!user || !currentChat) return;
 
+		// Connect to websocket server with token auth
 		const socketIo = io(import.meta.env.VITE_API_URL, {
 			withCredentials: true,
-			auth: {
-				token: localStorage.getItem("token"),
-			},
 		});
 
+		// Connection established
 		socketIo.on("connect", () => {
 			console.log("Socket connected");
 			setIsConnected(true);
 
 			// Join the appropriate chat room
 			socketIo.emit("chat:join", currentChat._id);
-
-			// Request previous messages
-			socketIo.emit("chat:getMessages", currentChat._id);
 		});
 
+		// Handle incoming messages
 		socketIo.on("chat:messages", (messageHistory) => {
 			console.log("Received message history:", messageHistory);
 			setMessages(messageHistory || []);
 		});
 
+		// Handle new messages
 		socketIo.on("chat:message", (message) => {
-			console.log("Received message:", message);
+			console.log("Received new message:", message);
 			setMessages((prev) => [...prev, message]);
 		});
 
+		// Handle active users update
 		socketIo.on("chat:activeUsers", (users) => {
 			console.log("Active users:", users);
 			setActiveUsers(users);
 		});
 
+		// Handle typing indicators
+		socketIo.on("chat:typing", ({ userId, username, isTyping }) => {
+			if (isTyping) {
+				setTypingUsers((prev) => [
+					...prev.filter((user) => user.userId !== userId),
+					{ userId, username },
+				]);
+			} else {
+				setTypingUsers((prev) => prev.filter((user) => user.userId !== userId));
+			}
+		});
+
+		// User joined notification
 		socketIo.on("chat:userJoined", (userData) => {
 			toast({
 				title: "User joined",
@@ -100,6 +126,7 @@ const ChatContainer = () => {
 			});
 		});
 
+		// User left notification
 		socketIo.on("chat:userLeft", (userData) => {
 			toast({
 				title: "User left",
@@ -110,9 +137,10 @@ const ChatContainer = () => {
 			});
 		});
 
+		// Error handling
 		socketIo.on("chat:error", (error) => {
 			toast({
-				title: "Error",
+				title: "Chat Error",
 				description: error,
 				status: "error",
 				duration: 3000,
@@ -120,13 +148,23 @@ const ChatContainer = () => {
 			});
 		});
 
+		// Disconnection handling
 		socketIo.on("disconnect", () => {
 			console.log("Socket disconnected");
 			setIsConnected(false);
+
+			toast({
+				title: "Disconnected",
+				description: "Lost connection to chat server",
+				status: "warning",
+				duration: 3000,
+				isClosable: true,
+			});
 		});
 
 		setSocket(socketIo);
 
+		// Cleanup on unmount
 		return () => {
 			if (socketIo) {
 				console.log("Leaving chat:", currentChat._id);
@@ -135,8 +173,9 @@ const ChatContainer = () => {
 				setIsConnected(false);
 			}
 		};
-	}, [user, currentChat, toast]);
+	}, [user, currentChat, toast, navigate]);
 
+	// Send message handler
 	const handleSendMessage = (content) => {
 		if (!socket || !currentChat || !isConnected) return;
 
@@ -146,10 +185,17 @@ const ChatContainer = () => {
 		});
 	};
 
-	const handleBack = () => {
-		navigate("/");
+	// Handle typing status
+	const handleTypingStatus = (isTyping) => {
+		if (!socket || !currentChat || !isConnected) return;
+
+		socket.emit("chat:typing", {
+			chatId: currentChat._id,
+			isTyping,
+		});
 	};
 
+	// Loading state
 	if (isLoading) {
 		return (
 			<Box
@@ -162,6 +208,7 @@ const ChatContainer = () => {
 		);
 	}
 
+	// Authentication check
 	if (!user) {
 		return (
 			<Box textAlign="center" py={10}>
@@ -170,6 +217,7 @@ const ChatContainer = () => {
 		);
 	}
 
+	// Invalid chat check
 	if (!currentChat) {
 		return (
 			<Box textAlign="center" py={10}>
@@ -180,8 +228,13 @@ const ChatContainer = () => {
 
 	return (
 		<Flex direction="column" height="calc(100vh - 80px)" overflow="hidden">
-			<ChatHeader chatType={chatType} />
+			<ChatHeader
+				chatType={chatType}
+				activeUsers={activeUsers.length}
+				isConnected={isConnected}
+			/>
 
+			{/* Chat status bar */}
 			<Box
 				bg="gray.700"
 				p={4}
@@ -206,12 +259,15 @@ const ChatContainer = () => {
 				</Text>
 			</Box>
 
+			{/* Message display area */}
 			<MessageList messages={messages} currentUser={user} />
 
+			{/* Message input area */}
 			<MessageInput
 				onSendMessage={handleSendMessage}
-				socket={socket}
-				currentChatId={currentChat._id}
+				onTypingStatus={handleTypingStatus}
+				typingUsers={typingUsers}
+				isConnected={isConnected}
 			/>
 		</Flex>
 	);

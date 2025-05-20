@@ -1,9 +1,10 @@
 import { useEffect, useRef } from "react";
-import { Box, Flex, Text, Avatar, Badge } from "@chakra-ui/react";
+import { Box, Flex, Text, Avatar, Badge, Divider } from "@chakra-ui/react";
 
 const MessageList = ({ messages, currentUser }) => {
 	const messagesEndRef = useRef(null);
 
+	// Auto-scroll to bottom when new messages arrive
 	const scrollToBottom = () => {
 		messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
 	};
@@ -14,8 +15,15 @@ const MessageList = ({ messages, currentUser }) => {
 
 	// Helper function to format timestamps
 	const formatTime = (timestamp) => {
-		const date = new Date(timestamp);
-		return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+		try {
+			const date = new Date(timestamp);
+			return date.toLocaleTimeString([], {
+				hour: "2-digit",
+				minute: "2-digit",
+			});
+		} catch (error) {
+			return "Unknown time";
+		}
 	};
 
 	// Get a color for a user based on their ID to have consistent colors
@@ -42,6 +50,16 @@ const MessageList = ({ messages, currentUser }) => {
 		return colors[hash];
 	};
 
+	// Group messages by date for better visual organization
+	const getMessageDate = (timestamp) => {
+		try {
+			const date = new Date(timestamp);
+			return date.toDateString();
+		} catch (error) {
+			return "";
+		}
+	};
+
 	return (
 		<Box
 			flex="1"
@@ -63,7 +81,9 @@ const MessageList = ({ messages, currentUser }) => {
 			}}>
 			{messages.length === 0 ? (
 				<Flex justify="center" align="center" height="100%">
-					<Text color="gray.500">No messages yet</Text>
+					<Text color="gray.500">
+						No messages yet. Be the first to send one!
+					</Text>
 				</Flex>
 			) : (
 				<>
@@ -72,15 +92,16 @@ const MessageList = ({ messages, currentUser }) => {
 						const userColor = getUserColor(message.userId?._id);
 						const username = message.userId?.email || "Unknown User";
 						const displayName = username.split("@")[0]; // Extract name from email
+						const role = message.userId?.role || "";
 
 						// Add date separator when day changes
 						const shouldShowDate =
 							index === 0 ||
-							new Date(message.createdAt).toDateString() !==
-								new Date(messages[index - 1].createdAt).toDateString();
+							getMessageDate(message.createdAt) !==
+								getMessageDate(messages[index - 1].createdAt);
 
 						return (
-							<Box key={index}>
+							<Box key={`${message._id || index}`}>
 								{shouldShowDate && (
 									<Flex justify="center" mb={4} mt={index > 0 ? 6 : 0}>
 										<Badge px={2} py={1} borderRadius="md" colorScheme="gray">
@@ -117,14 +138,23 @@ const MessageList = ({ messages, currentUser }) => {
 												color={userColor}
 												mb={1}>
 												{displayName}
-												{message.userId?.role && (
-													<Text as="span" fontSize="xs" ml={1} color="gray.400">
-														({message.userId.role})
-													</Text>
+												{role && (
+													<Badge
+														ml={1}
+														size="sm"
+														colorScheme={
+															role === "SUPER"
+																? "red"
+																: role === "ADMIN"
+																? "purple"
+																: "blue"
+														}>
+														{role}
+													</Badge>
 												)}
 											</Text>
 										)}
-										<Text>{message.content}</Text>
+										<Text wordBreak="break-word">{message.content}</Text>
 										<Text
 											fontSize="xs"
 											color="gray.400"

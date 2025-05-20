@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
 	Box,
 	Button,
@@ -9,71 +9,56 @@ import {
 } from "@chakra-ui/react";
 import { ArrowRightIcon } from "@chakra-ui/icons";
 
-const MessageInput = ({ onSendMessage, socket, currentChatId }) => {
+const MessageInput = ({
+	onSendMessage,
+	onTypingStatus,
+	typingUsers = [],
+	isConnected,
+}) => {
 	const [message, setMessage] = useState("");
 	const [isTyping, setIsTyping] = useState(false);
-	const [typingUsers, setTypingUsers] = useState([]);
+	const typingTimeoutRef = useRef(null);
 
+	// Reset typing status when component unmounts
 	useEffect(() => {
-		if (!socket) return;
-
-		// Listen for typing events from other users
-		socket.on("chat:typing", ({ userId, username, isTyping }) => {
-			if (isTyping) {
-				setTypingUsers((prev) => [
-					...prev.filter((user) => user.userId !== userId),
-					{ userId, username },
-				]);
-			} else {
-				setTypingUsers((prev) => prev.filter((user) => user.userId !== userId));
-			}
-		});
-
 		return () => {
-			socket.off("chat:typing");
+			if (typingTimeoutRef.current) {
+				clearTimeout(typingTimeoutRef.current);
+			}
+			// Ensure typing status is set to false when component unmounts
+			if (isTyping) {
+				onTypingStatus(false);
+			}
 		};
-	}, [socket]);
+	}, [isTyping, onTypingStatus]);
 
-	// Debounce typing indicator to avoid spamming
+	// Handle typing indicator with debounce
 	useEffect(() => {
-		let typingTimeout;
-
-		if (isTyping && socket && currentChatId) {
-			socket.emit("chat:typing", {
-				chatId: currentChatId,
-				isTyping: true,
-			});
-
-			// Auto-reset typing status after 2 seconds of inactivity
-			typingTimeout = setTimeout(() => {
-				setIsTyping(false);
-				socket.emit("chat:typing", {
-					chatId: currentChatId,
-					isTyping: false,
-				});
-			}, 2000);
+		if (typingTimeoutRef.current) {
+			clearTimeout(typingTimeoutRef.current);
 		}
 
-		return () => {
-			if (typingTimeout) clearTimeout(typingTimeout);
-		};
-	}, [isTyping, message, socket, currentChatId]);
+		if (message.trim()) {
+			// If user is typing and has content, send typing status
+			if (!isTyping) {
+				setIsTyping(true);
+				onTypingStatus(true);
+			}
+
+			// Auto-reset typing status after 2 seconds of inactivity
+			typingTimeoutRef.current = setTimeout(() => {
+				setIsTyping(false);
+				onTypingStatus(false);
+			}, 2000);
+		} else if (isTyping) {
+			// If user cleared message, stop typing indicator
+			setIsTyping(false);
+			onTypingStatus(false);
+		}
+	}, [message, isTyping, onTypingStatus]);
 
 	const handleInputChange = (e) => {
 		setMessage(e.target.value);
-
-		// Set typing indicator
-		if (!isTyping && e.target.value) {
-			setIsTyping(true);
-		} else if (isTyping && !e.target.value) {
-			setIsTyping(false);
-			if (socket && currentChatId) {
-				socket.emit("chat:typing", {
-					chatId: currentChatId,
-					isTyping: false,
-				});
-			}
-		}
 	};
 
 	const handleSubmit = (e) => {
@@ -83,18 +68,15 @@ const MessageInput = ({ onSendMessage, socket, currentChatId }) => {
 
 		onSendMessage(message.trim());
 		setMessage("");
-		setIsTyping(false);
 
-		if (socket && currentChatId) {
-			socket.emit("chat:typing", {
-				chatId: currentChatId,
-				isTyping: false,
-			});
-		}
+		// Reset typing status after sending message
+		setIsTyping(false);
+		onTypingStatus(false);
 	};
 
 	return (
 		<Box>
+			{/* Typing indicator display */}
 			{typingUsers.length > 0 && (
 				<Box px={4} py={1} fontSize="sm" color="gray.400" fontStyle="italic">
 					{typingUsers.length === 1
@@ -103,6 +85,7 @@ const MessageInput = ({ onSendMessage, socket, currentChatId }) => {
 				</Box>
 			)}
 
+			{/* Message input form */}
 			<Box
 				bg={useColorModeValue("gray.100", "gray.800")}
 				p={4}
@@ -113,18 +96,21 @@ const MessageInput = ({ onSendMessage, socket, currentChatId }) => {
 						<Input
 							value={message}
 							onChange={handleInputChange}
-							placeholder="Type a message..."
+							placeholder={
+								isConnected ? "Type a message..." : "Disconnected..."
+							}
 							size="md"
 							bg={useColorModeValue("white", "gray.700")}
 							borderRadius="md"
 							mr={2}
 							autoComplete="off"
+							isDisabled={!isConnected}
 						/>
 						<Button
 							type="submit"
 							colorScheme="blue"
 							rightIcon={<ArrowRightIcon />}
-							isDisabled={!message.trim()}>
+							isDisabled={!isConnected || !message.trim()}>
 							Send
 						</Button>
 					</Flex>
