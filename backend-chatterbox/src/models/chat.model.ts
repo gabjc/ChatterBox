@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { string } from "zod";
 
 export enum ChatType {
 	PUBLIC = "PUBLIC",
@@ -26,6 +27,8 @@ const chatSchema = new mongoose.Schema<ChatDocument>(
 			enum: Object.values(ChatType),
 			required: true,
 			default: ChatType.PUBLIC,
+			unique: true,
+			sparse: true,
 		},
 		createdBy: {
 			type: mongoose.Schema.Types.ObjectId,

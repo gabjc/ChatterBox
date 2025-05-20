@@ -1,29 +1,23 @@
 import { Router } from "express";
 import {
-	addChatMembersHandler,
-	createChatHandler,
-	deleteChatHandler,
 	getChatByIdHandler,
 	getChatMessagesHandler,
 	getUserChatsHandler,
-	removeChatMembersHandler,
-	updateChatHandler,
+	updateUserRoleHandler,
 } from "../controllers/chat.controller";
 
 const chatRoutes = Router();
 
-// CRUD for chats
-chatRoutes.post("/", createChatHandler);
+// Get available chats
 chatRoutes.get("/", getUserChatsHandler);
-chatRoutes.get("/:id", getChatByIdHandler);
-chatRoutes.put("/:id", updateChatHandler);
-chatRoutes.delete("/:id", deleteChatHandler);
 
-// Chat messages
+// Get chat by ID
+chatRoutes.get("/:id", getChatByIdHandler);
+
+// Get chat messages
 chatRoutes.get("/:id/messages", getChatMessagesHandler);
 
-// Chat members
-chatRoutes.post("/:id/members", addChatMembersHandler);
-chatRoutes.delete("/:id/members", removeChatMembersHandler);
+// Update user role (admin function)
+chatRoutes.put("/user/:userId/role", updateUserRoleHandler);
 
 export default chatRoutes;

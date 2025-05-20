@@ -5,6 +5,9 @@ const socketIo = require("socket.io-client");
 const SERVER_URL = "http://localhost:5000"; // Change this to your server URL
 const ACCESS_TOKEN = "YOUR_ACCESS_TOKEN_HERE"; // Replace with a valid access token
 
+// Select chat type to test (public or private)
+const CHAT_ID = "public-chat"; // Change to "private-chat" to test private chat
+
 // Connect to WebSocket server
 const socket = socketIo(SERVER_URL, {
 	auth: {
@@ -19,16 +22,20 @@ socket.on("connect", () => {
 	console.log("Connected to WebSocket server!");
 	console.log("Socket ID:", socket.id);
 
+	// Get available chats
+	socket.on("chat:list", (chats) => {
+		console.log("Available chats:", chats);
+	});
+
 	// Join a chat after connecting
-	// Replace with an actual chat ID from your database
-	const testChatId = "YOUR_CHAT_ID_HERE";
-	socket.emit("chat:join", testChatId);
+	console.log(`Joining chat: ${CHAT_ID}`);
+	socket.emit("chat:join", CHAT_ID);
 
 	// Send a test message after 2 seconds
 	setTimeout(() => {
 		console.log("Sending test message...");
 		socket.emit("chat:message", {
-			chatId: testChatId,
+			chatId: CHAT_ID,
 			content: "Hello, this is a test message from the WebSocket client!",
 		});
 	}, 2000);
@@ -46,7 +53,15 @@ socket.on("chat:error", (error) => {
 
 // Listen for messages history when joining a chat
 socket.on("chat:messages", (messages) => {
-	console.log("Received message history:", messages);
+	console.log(`Received message history (${messages.length} messages):`);
+	messages.forEach((msg, i) => {
+		console.log(`[${i + 1}] ${msg.userId?.email || "Unknown"}: ${msg.content}`);
+	});
+});
+
+// Listen for active users updates
+socket.on("chat:activeUsers", (users) => {
+	console.log("Active users:", users);
 });
 
 // Listen for user joined/left events
@@ -57,6 +72,26 @@ socket.on("chat:userJoined", (data) => {
 socket.on("chat:userLeft", (data) => {
 	console.log("User left:", data);
 });
+
+// Listen for typing events
+socket.on("chat:typing", (data) => {
+	console.log(
+		`${data.username || "Someone"} is ${data.isTyping ? "typing..." : "stopped typing"}`
+	);
+});
+
+// Send typing indicator when typing
+const simulateTyping = () => {
+	console.log("Simulating typing...");
+	socket.emit("chat:typing", { chatId: CHAT_ID, isTyping: true });
+
+	setTimeout(() => {
+		console.log("Simulating stopped typing...");
+		socket.emit("chat:typing", { chatId: CHAT_ID, isTyping: false });
+	}, 3000);
+};
+
+setTimeout(simulateTyping, 5000);
 
 // Connection error handling
 socket.on("connect_error", (error) => {
@@ -70,6 +105,7 @@ socket.on("disconnect", (reason) => {
 // Graceful shutdown
 process.on("SIGINT", () => {
 	console.log("Disconnecting from WebSocket server...");
+	socket.emit("chat:leave", CHAT_ID);
 	socket.disconnect();
 	process.exit(0);
 });
