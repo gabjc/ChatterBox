@@ -4,7 +4,7 @@ Chat app I made a long time ago but upgraded, gave it JWT auth and role based pe
 
 ---
 
-## 🔐 Features
+## Features
 
 - **JWT Authentication**  
   The app utilizes JWT to set cookies for the access and refresh tokens (refresh tokens are not sent per request, only short-lived access tokens).
@@ -24,7 +24,7 @@ Chat app I made a long time ago but upgraded, gave it JWT auth and role based pe
 
 ---
 
-## Tech Stack
+## The stuff I used (smiley face here)
 
 - **Frontend**: React, Vite, TailwindCSS
 - **Backend**: Node.js, Express, MongoDB, Socket.IO
